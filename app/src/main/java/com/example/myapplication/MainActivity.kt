@@ -13,29 +13,32 @@ import android.view.View
 import android.widget.SeekBar
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.appcompat.app.AlertDialog
 import com.example.myapplication.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding:ActivityMainBinding
-    private  var exit = false
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
-        onBackPressedDispatcher.addCallback(
-            this,
-            object :OnBackPressedCallback(true){
-                override fun handleOnBackPressed() {
-                    if (exit)
-                        finish()
-                    exit = true
-                    toast("برای خروج دوبار کلیک کنید")
-                    Handler(Looper.getMainLooper()).postDelayed({exit = false},2000)
-                }
-
+        binding.btnShow.setOnClickListener{
+            val dialog = AlertDialog.Builder(this)
+            dialog.setTitle("Test")
+            dialog.setMessage("ActivityMainBinding.inflate")
+            dialog.setCancelable(false)
+            dialog.setPositiveButton("ok"){_,_ ->
+                toast("ok")
             }
-        )
+            dialog.setNegativeButton("Cancel"){_,_ ->
+                toast("cancel")
+            }
+            dialog.setNeutralButton("setting"){_,_ ->
+                toast("setting")
+            }
+            dialog.create().show()
+        }
     }
     private fun toast(text: String) {
         Toast.makeText(this,text,Toast.LENGTH_SHORT).show()
