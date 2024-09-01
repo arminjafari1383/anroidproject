@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">My Application</string>
+    <string name="welcome">welc</string>
+    <string name="phone"> phone-number </string>
+    <string name="digikala">digikala</string>
+    <string name="on">on</string>
+    <string name="off">off</string>
+    <string name="settings">settings</string>
+    <string name="sleep">sleep</string>
+    <string name="next">next</string>
+    <string name="enter">enter</string>
+    <string name="show">show</string>
+    <string name="test_activity">Test activity</string>
+    <string name="test">test</string>
+    <string name="list">list</string>
+</resources>
