@@ -19,42 +19,21 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
-        var isAllFabVisibility = false
-        binding.extendFabShow.shrink()
-        binding.extendFabShow.setOnClickListener {
-            isAllFabVisibility = if (isAllFabVisibility) {
-                hide()
-                false
-            } else {
-                show()
-                true
-            }
-        }
-        }
-
-    private fun show() {
-        binding.fabEdit.show()
-        binding.fabDelete.show()
-        binding.fabShare.show()
-        binding.extendFabShow.extend()
+        toast("oncreate")
     }
 
-    private fun hide() {
-        binding.fabEdit.hide()
-        binding.fabDelete.hide()
-        binding.fabShare.hide()
-        binding.extendFabShow.shrink()
-    }
-
-    fun onClick(view: View){
-        when (view.id){
-            R.id.fab_edit -> toast("ویرایش کردن")
-            R.id.fab_delete -> toast("حذف کردن")
-            R.id.fab_share -> toast("اشتراک گذاری کردن")
-        }
+    override fun onStart() {
+        super.onStart()
+        toast("onStart")
     }
 
     private fun toast(text: String) {
         Toast.makeText(this,text,Toast.LENGTH_SHORT).show()
     }
+
+    override fun onResume() {
+        super.onResume()
+        toast("onResume")
+    }
+
 }
