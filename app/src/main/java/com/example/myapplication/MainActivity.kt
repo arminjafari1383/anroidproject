@@ -5,6 +5,9 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Color
 import android.media.AudioManager
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
@@ -27,16 +30,34 @@ class MainActivity : AppCompatActivity() {
         val view = binding.root
         setContentView(view)
         binding.btnShow.setOnClickListener{
-            val snack = Snackbar.make(binding.testRoot,"نبود اینترنت",Snackbar.LENGTH_INDEFINITE)
-            snack.setAction("خروج"){
-                toast("Test")
-            }
-            snack.setTextColor(Color.WHITE)
-            snack.setActionTextColor(Color.RED)
-            snack.setBackgroundTint(Color.BLACK)
-            ViewCompat.setLayoutDirection(snack.view,ViewCompat.LAYOUT_DIRECTION_RTL)
-            snack.show()
+            if (isNetworkState())
+                toast("is connected")
+            else
+                toast("is not connected")
         }
+    }
+    private fun isNetworkState():Boolean{
+        var result = false
+        val connectivityManager = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+            val networkCapabilities = connectivityManager.activeNetwork ?: return false
+            val actNw = connectivityManager.getNetworkCapabilities(networkCapabilities) ?: return false
+            result = when{
+                actNw.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
+                actNw.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
+                actNw.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> true
+                else -> false
+            }
+        }else{
+                val netInfo = connectivityManager.activeNetworkInfo
+                result = when(netInfo?.type){
+                    ConnectivityManager.TYPE_WIFI -> true
+                    ConnectivityManager.TYPE_MOBILE -> true
+                    ConnectivityManager.TYPE_ETHERNET -> true
+                    else -> false
+                }
+        }
+        return result
     }
     private fun toast(text: String) {
         Toast.makeText(this,text,Toast.LENGTH_SHORT).show()
