@@ -1,5 +1,6 @@
 package com.example.myapplication
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -12,8 +13,14 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
 import android.util.Log
+import android.view.KeyEvent
 import android.view.View
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import android.widget.SeekBar
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -29,14 +36,73 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
-        binding.btnShow.setOnClickListener{
-            if (isNetworkState())
-                toast("is connected")
-            else
-                toast("is not connected")
+        if (isInternetAvailable())
+        setWebview()
+        else
+            showErrorDialog()
+    }
+
+    private fun showErrorDialog() {
+        val dialog = AlertDialog.Builder(this)
+        dialog.setTitle("No internet")
+        dialog.setMessage("No internet, please connect to internet")
+        dialog.setIcon(R.drawable.ic_internet)
+        dialog.setPositiveButton("Retry"){_,_,->
+            recreate()
+        }
+        dialog.setNegativeButton("Cancel"){_,_,->
+            finish()
+        }
+        dialog.setNeutralButton("Setting"){_,_,->
+            startActivity(Intent(Settings.ACTION_WIFI_SETTINGS))
+        }
+        dialog.create().show()
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
+    private fun setWebview() {
+        startload()
+        binding.webView.settings.javaScriptEnabled = true
+        binding.webView.loadUrl("https://www.digikala.com/")
+        binding.webView.webViewClient = object : WebViewClient(){
+            override fun onPageFinished(view: WebView?, url: String?) {
+                endLoad()
+            }
+
+            override fun onReceivedError(
+                view: WebView?,
+                request: WebResourceRequest?,
+                error: WebResourceError?
+            ) {
+                super.onReceivedError(view, request, error)
+                endLoad()
+            }
         }
     }
-    private fun isNetworkState():Boolean{
+
+    private fun startload() {
+        binding.progressBar.visibility = View.VISIBLE
+    }
+
+    private fun endLoad() {
+        binding.progressBar.visibility = View.INVISIBLE
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if(!isInternetAvailable())
+            showErrorDialog()
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_BACK && binding.webView.canGoBack()){
+            binding.webView.goBack()
+            return true
+        }
+        return super.onKeyDown(keyCode, event)
+    }
+
+    private fun isInternetAvailable():Boolean{
         var result = false
         val connectivityManager = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
