@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.media.AudioManager
 import android.net.ConnectivityManager
@@ -25,107 +26,96 @@ import android.widget.SeekBar
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import com.example.myapplication.databinding.ActivityMainBinding
 import com.google.android.material.snackbar.Snackbar
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding:ActivityMainBinding
+    private val cameraRequestCode = 100
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
-        if (isInternetAvailable())
-        setWebview()
-        else
-            showErrorDialog()
-    }
+        binding.btnGetPermission.setOnClickListener {
 
-    private fun showErrorDialog() {
-        val dialog = AlertDialog.Builder(this)
-        dialog.setTitle("No internet")
-        dialog.setMessage("No internet, please connect to internet")
-        dialog.setIcon(R.drawable.ic_internet)
-        dialog.setPositiveButton("Retry"){_,_,->
-            recreate()
+            val cameraPermission = ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA)
+
+            // در این بخش بررسی میشود که مجوز از قبل وجود دارد یا نه
+            if (cameraPermission != PackageManager.PERMISSION_GRANTED)
+                requestCameraPermission()
+            else
+                toast("مجوز قبلا دریافت شده")
+
         }
-        dialog.setNegativeButton("Cancel"){_,_,->
-            finish()
+        
         }
-        dialog.setNeutralButton("Setting"){_,_,->
-            startActivity(Intent(Settings.ACTION_WIFI_SETTINGS))
-        }
-        dialog.create().show()
-    }
 
-    @SuppressLint("SetJavaScriptEnabled")
-    private fun setWebview() {
-        startload()
-        binding.webView.settings.javaScriptEnabled = true
-        binding.webView.loadUrl("https://www.digikala.com/")
-        binding.webView.webViewClient = object : WebViewClient(){
-            override fun onPageFinished(view: WebView?, url: String?) {
-                endLoad()
-            }
-
-            override fun onReceivedError(
-                view: WebView?,
-                request: WebResourceRequest?,
-                error: WebResourceError?
-            ) {
-                super.onReceivedError(view, request, error)
-                endLoad()
-            }
-        }
-    }
-
-    private fun startload() {
-        binding.progressBar.visibility = View.VISIBLE
-    }
-
-    private fun endLoad() {
-        binding.progressBar.visibility = View.INVISIBLE
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if(!isInternetAvailable())
-            showErrorDialog()
-    }
-
-    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        if (keyCode == KeyEvent.KEYCODE_BACK && binding.webView.canGoBack()){
-            binding.webView.goBack()
-            return true
-        }
-        return super.onKeyDown(keyCode, event)
-    }
-
-    private fun isInternetAvailable():Boolean{
-        var result = false
-        val connectivityManager = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
-            val networkCapabilities = connectivityManager.activeNetwork ?: return false
-            val actNw = connectivityManager.getNetworkCapabilities(networkCapabilities) ?: return false
-            result = when{
-                actNw.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
-                actNw.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
-                actNw.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> true
-                else -> false
-            }
-        }else{
-                val netInfo = connectivityManager.activeNetworkInfo
-                result = when(netInfo?.type){
-                    ConnectivityManager.TYPE_WIFI -> true
-                    ConnectivityManager.TYPE_MOBILE -> true
-                    ConnectivityManager.TYPE_ETHERNET -> true
-                    else -> false
-                }
-        }
-        return result
-    }
     private fun toast(text: String) {
-        Toast.makeText(this,text,Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun requestCameraPermission() {
+
+        // در اینجا بررسی میشود که آیا کاربر یک بار مجوز را رد کرده است یا نه
+        // اگر رد کرده باشد توضیحات بیشتر در قالب Alert Dialog به او نمایش داده میشود
+        if (ActivityCompat.shouldShowRequestPermissionRationale(
+                this,
+                android.Manifest.permission.CAMERA
+            )
+        )
+            AlertDialog.Builder(this)
+                .setTitle("درخواست مجوز")
+                .setMessage("برای دسترسی به دوربین باید مجوز را تایید کنید")
+                .setCancelable(false)
+                .setPositiveButton("موافقم") { _, _ ->
+                    reqPermission()
+                }
+                .setNegativeButton("لغو") { dialogInterface, _ ->
+                    dialogInterface.dismiss()
+                }
+                .create()
+                .show()
+        else
+            reqPermission()
+
+    }
+
+    private fun reqPermission() {
+
+        // در بخش arrayOf میتوانیم چندین مجوز را درخواست کنیم
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(android.Manifest.permission.CAMERA),
+            cameraRequestCode
+        )
+
+    }
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+
+        // در اینجا بررسی میشود که کد مجوز همان چیزی باشد که مد نظر ماست
+        if (requestCode == cameraRequestCode) {
+
+            // در این بخش بررسی میشود که آیا مجوز تایید شده یا رد شده است
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                toast("مجوز تایید شد")
+
+            } else {
+
+                toast("مجوز رد شد")
+
+            }
+
+        } else
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
     }
 }
