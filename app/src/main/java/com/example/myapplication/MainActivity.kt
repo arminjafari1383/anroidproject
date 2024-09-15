@@ -7,6 +7,7 @@ import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.media.AudioManager
+import android.media.MediaPlayer
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
@@ -14,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.provider.MediaStore.Video.Media
 import android.provider.Settings
 import android.util.Log
 import android.view.KeyEvent
@@ -34,88 +36,30 @@ import com.google.android.material.snackbar.Snackbar
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding:ActivityMainBinding
-    private val cameraRequestCode = 100
+    private var mediaPlayer:MediaPlayer? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
-        val view = binding.root
-        setContentView(view)
-        binding.btnGetPermission.setOnClickListener {
-
-            val cameraPermission = ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA)
-
-            // در این بخش بررسی میشود که مجوز از قبل وجود دارد یا نه
-            if (cameraPermission != PackageManager.PERMISSION_GRANTED)
-                requestCameraPermission()
-            else
-                toast("مجوز قبلا دریافت شده")
-
-        }
-        
+        setContentView(binding.root)
+        binding.fabStart.setOnClickListener { startMusic() }
+        binding.fabPause.setOnClickListener { pauseMusic() }
+        binding.fabStop.setOnClickListener { stopMusic() }
         }
 
-    private fun toast(text: String) {
-        Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
+    private fun startMusic() {
+        if (mediaPlayer == null )
+            mediaPlayer = MediaPlayer.create(this,R.raw.music)
+        mediaPlayer?.start()
     }
 
-    private fun requestCameraPermission() {
+    private fun pauseMusic() {mediaPlayer?.pause()}
 
-        // در اینجا بررسی میشود که آیا کاربر یک بار مجوز را رد کرده است یا نه
-        // اگر رد کرده باشد توضیحات بیشتر در قالب Alert Dialog به او نمایش داده میشود
-        if (ActivityCompat.shouldShowRequestPermissionRationale(
-                this,
-                android.Manifest.permission.CAMERA
-            )
-        )
-            AlertDialog.Builder(this)
-                .setTitle("درخواست مجوز")
-                .setMessage("برای دسترسی به دوربین باید مجوز را تایید کنید")
-                .setCancelable(false)
-                .setPositiveButton("موافقم") { _, _ ->
-                    reqPermission()
-                }
-                .setNegativeButton("لغو") { dialogInterface, _ ->
-                    dialogInterface.dismiss()
-                }
-                .create()
-                .show()
-        else
-            reqPermission()
-
+    private fun stopMusic() {
+        mediaPlayer?.stop()
+        mediaPlayer?.release()
+        mediaPlayer = null
     }
 
-    private fun reqPermission() {
-
-        // در بخش arrayOf میتوانیم چندین مجوز را درخواست کنیم
-        ActivityCompat.requestPermissions(
-            this,
-            arrayOf(android.Manifest.permission.CAMERA),
-            cameraRequestCode
-        )
-
-    }
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-
-        // در اینجا بررسی میشود که کد مجوز همان چیزی باشد که مد نظر ماست
-        if (requestCode == cameraRequestCode) {
-
-            // در این بخش بررسی میشود که آیا مجوز تایید شده یا رد شده است
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                toast("مجوز تایید شد")
-
-            } else {
-
-                toast("مجوز رد شد")
-
-            }
-
-        } else
-            super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-
-    }
 }
+
+
