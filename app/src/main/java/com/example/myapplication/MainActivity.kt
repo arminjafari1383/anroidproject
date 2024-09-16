@@ -18,6 +18,7 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore.Video.Media
 import android.provider.Settings
+import android.text.Editable
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
@@ -42,68 +43,24 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        binding.fabStart.setOnClickListener { startMusic() }
-        binding.fabPause.setOnClickListener { pauseMusic() }
-        binding.fabStop.setOnClickListener { stopMusic() }
-        binding.seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                if( fromUser ) mediaPlayer?.seekTo(progress)
-            }
-
-            override fun onStartTrackingTouch(p0: SeekBar?) {}
-
-            override fun onStopTrackingTouch(p0: SeekBar?) {}
-
-        })
+        binding.button.setOnClickListener{
+            binding.textView.text = binding.editText.text.toString()
+            binding.editText.text = Editable.Factory().newEditable("")
+        }
         }
 
-    private fun startMusic() {
-        if (mediaPlayer == null ) {
-            val uri = "https://dl.mifa-music.ir/Music1/08/Erfan%20Tahmasbi%20-%20Harchi%20Daram.mp3"
-            mediaPlayer = MediaPlayer()
-            mediaPlayer?.setAudioAttributes(
-                AudioAttributes.Builder().setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).setUsage(AudioAttributes.USAGE_MEDIA).build()
-            )
-            mediaPlayer?.setDataSource(uri)
-            mediaPlayer?.prepare()
-            mediaPlayer?.setOnCompletionListener {
-                stopMusic()
-            }
-            initSeekBar()
-        }
-        mediaPlayer?.start()
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString("test",binding.textView.text.toString())
     }
 
-    private fun pauseMusic() {mediaPlayer?.pause()}
+    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+        super.onRestoreInstanceState(savedInstanceState)
+        binding.textView.text = savedInstanceState.getString("test")
 
-    private fun stopMusic() {
-        mediaPlayer?.stop()
-        mediaPlayer?.release()
-        mediaPlayer = null
     }
 
-    private fun initSeekBar(){
-        binding.seekBar.max = mediaPlayer?.duration ?: 100
-        val handler = Handler(mainLooper)
-        handler.postDelayed(object : Runnable {
-            override fun run() {
-                try {
-                    binding.seekBar.progress = mediaPlayer!!.currentPosition
-                    handler.postDelayed(this,1000)
-                }
-                catch (e:Exception){
-                    binding.seekBar.progress = 0
-                }
 
-            }
-
-        },0)
-    }
-
-    override fun onStop() {
-        super.onStop()
-        stopMusic()
-    }
 
 }
 
